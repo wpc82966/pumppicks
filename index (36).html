@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PumpPicks">
+<title>PumpPicks</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Saira+Condensed:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f1c;
+    --panel:#121829;
+    --panel-2:#171f35;
+    --line:#243049;
+    --ink:#eef2fb;
+    --muted:#8893ad;
+    --white-ball:#f4f1e8;
+    --white-ball-edge:#cfc8b4;
+    --pb:#e4002b;       /* Powerball red */
+    --pb-glow:rgba(228,0,43,.45);
+    --mm:#f6c500;       /* Mega Ball gold */
+    --mm-glow:rgba(246,197,0,.4);
+    --accent:#36e0c4;   /* terminal teal */
+    --accent-dim:#1c6c61;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(110% 60% at 50% -8%, rgba(54,224,196,.10), transparent 60%),
+      radial-gradient(80% 50% at 100% 110%, var(--accent-dim), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Sora',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:500px;margin:0 auto;padding:18px 16px 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+
+  /* Header */
+  header{text-align:center;padding:6px 0 14px}
+  .brand{
+    font-family:'Bebas Neue',sans-serif;font-size:46px;line-height:.9;letter-spacing:2px;
+    background:linear-gradient(180deg,#fff,#aeb8d0);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .brand .dot{color:var(--accent);-webkit-text-fill-color:var(--accent)}
+  .tag{color:var(--muted);font-size:12.5px;letter-spacing:.5px;margin-top:2px}
+
+  /* Game tabs */
+  .tabs{display:flex;gap:8px;margin:16px 0 14px}
+  .tab{
+    flex:1;padding:13px 8px;border-radius:14px;border:1px solid var(--line);
+    background:var(--panel);color:var(--muted);font-family:'Bebas Neue',sans-serif;
+    font-size:21px;letter-spacing:1px;cursor:pointer;transition:.18s;text-align:center;
+  }
+  .tab .sub{display:block;font-family:'Sora';font-size:10px;letter-spacing:.3px;margin-top:1px;opacity:.7}
+  .tab.active{color:var(--ink);border-color:transparent}
+  .tab.pb.active{background:linear-gradient(180deg,#2a1119,#1a0c11);border-color:var(--pb);box-shadow:0 0 0 1px var(--pb),0 8px 24px -10px var(--pb-glow)}
+  .tab.mm.active{background:linear-gradient(180deg,#2a2407,#191604);border-color:var(--mm);box-shadow:0 0 0 1px var(--mm),0 8px 24px -10px var(--mm-glow)}
+
+  /* Controls */
+  .controls{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:14px}
+  .ctl-label{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+  .seg button{
+    flex:1;border:0;background:transparent;color:var(--muted);font-family:'Sora';font-weight:600;
+    font-size:12.5px;padding:9px 4px;border-radius:9px;cursor:pointer;transition:.15s;white-space:nowrap;
+  }
+  .seg button.on{background:var(--panel-2);color:var(--ink);box-shadow:0 2px 8px -4px #000}
+  .seg.lines button.on{color:var(--accent)}
+  .strat-note{font-size:11.5px;color:var(--muted);margin:9px 2px 0;min-height:15px;line-height:1.4}
+
+  .go{
+    width:100%;margin-top:14px;padding:16px;border:0;border-radius:14px;cursor:pointer;
+    font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#04231f;
+    background:linear-gradient(180deg,#4ff2d6,#22b9a1);box-shadow:0 10px 26px -12px var(--accent);
+    transition:transform .08s;
+  }
+  .go:active{transform:scale(.985)}
+
+  /* Lines output */
+  #out{margin-top:4px}
+  .line{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:14px 12px;margin-bottom:10px;animation:pop .35s ease both;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .line-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;padding:0 2px}
+  .line-no{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .copy{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;font-size:11px;
+    padding:5px 10px;cursor:pointer;font-family:'Sora'}
+  .copy:active{color:var(--accent);border-color:var(--accent)}
+  .balls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .ball{
+    width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'Saira Condensed',sans-serif;font-weight:800;font-size:21px;position:relative;
+  }
+  .ball.w{
+    color:#1b1b1b;
+    background:radial-gradient(circle at 33% 28%, #ffffff, var(--white-ball) 55%, var(--white-ball-edge));
+    box-shadow:inset 0 -3px 6px rgba(0,0,0,.18), 0 4px 10px -4px #000;
+  }
+  .ball.sp{color:#fff;font-size:21px}
+  .ball.sp.pb{background:radial-gradient(circle at 33% 28%, #ff5a73, var(--pb) 60%, #9c0020);
+    box-shadow:inset 0 -3px 7px rgba(0,0,0,.3), 0 4px 14px -4px var(--pb-glow)}
+  .ball.sp.mm{color:#3a2c00;background:radial-gradient(circle at 33% 28%, #ffe680, var(--mm) 60%, #c79a00);
+    box-shadow:inset 0 -3px 7px rgba(0,0,0,.25), 0 4px 14px -4px var(--mm-glow)}
+  .sep{width:1px;align-self:stretch;background:var(--line);margin:2px 2px}
+
+  /* Stats */
+  details{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-top:14px;overflow:hidden}
+  summary{padding:14px 16px;cursor:pointer;font-family:'Bebas Neue';font-size:19px;letter-spacing:1px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary .chev{color:var(--accent);font-size:14px;transition:.2s}
+  details[open] summary .chev{transform:rotate(180deg)}
+  .stat-body{padding:4px 16px 18px}
+  .stat-row{margin:14px 0 0}
+  .stat-h{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .pill{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 4px;
+    border-radius:9px;background:var(--panel-2);border:1px solid var(--line);font-family:'Saira Condensed';
+    font-weight:700;font-size:16px;margin:0 6px 6px 0}
+  .pill small{font-family:'Sora';font-weight:500;font-size:9px;color:var(--muted);margin-left:3px}
+  .pill.hot{border-color:#7a2030}.pill.cold{border-color:#1f4a6b}.pill.due{border-color:var(--accent-dim)}
+  .pillrow{display:flex;flex-wrap:wrap}
+  .meta{font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.5;border-top:1px solid var(--line);padding-top:12px}
+  .meta b{color:var(--ink);font-weight:600}
+
+  .status{text-align:center;font-size:12px;color:var(--muted);padding:24px 0}
+  .status .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;animation:spin 1s linear infinite;vertical-align:-3px;margin-right:7px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .err{color:#ff8a9c}
+  .retry{margin-top:10px;background:none;border:1px solid var(--line);color:var(--accent);border-radius:9px;padding:8px 16px;font-family:'Sora';cursor:pointer}
+
+  .disclaimer{
+    margin-top:18px;text-align:center;font-size:11.5px;line-height:1.55;color:var(--muted);
+    background:var(--panel);border:1px dashed var(--line);border-radius:14px;padding:13px 16px;
+  }
+  .disclaimer b{color:#cdd5e6}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--accent);color:#04231f;font-weight:600;font-size:13px;padding:9px 16px;border-radius:10px;
+    transition:.25s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* Power Play */
+  .pp-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;
+    background:linear-gradient(180deg,#2a1119,#1a0c11);border:1px solid var(--pb);
+    border-radius:14px;padding:13px 14px;cursor:pointer;box-shadow:0 6px 20px -12px var(--pb-glow)}
+  .pp-title{font-family:'Bebas Neue';font-size:19px;letter-spacing:1px}
+  .pp-cost{font-family:'Sora';font-size:11px;color:#ff8a9c;letter-spacing:.3px;margin-left:6px}
+  .pp-sub{font-size:11px;color:var(--muted);margin-top:1px}
+  .switch{width:50px;height:28px;border-radius:20px;background:#3a2128;border:1px solid #5a2330;
+    position:relative;flex:0 0 auto;transition:.18s}
+  .switch span{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;
+    background:#caa;transition:.18s}
+  .switch.on{background:var(--pb);border-color:var(--pb)}
+  .switch.on span{left:24px;background:#fff}
+  .pp-note{font-size:11.5px;color:var(--muted);margin-top:14px;background:linear-gradient(180deg,#2a2407,#191604);
+    border:1px solid var(--mm);border-radius:12px;padding:11px 13px;line-height:1.45}
+  .cost-bar{text-align:center;font-size:12.5px;color:var(--muted);margin:0 0 12px}
+  .cost-bar b{color:var(--ink);font-weight:600}
+  .pp-badge{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-family:'Sora';
+    font-size:11px;font-weight:600;color:#ff8a9c;background:rgba(228,0,43,.12);
+    border:1px solid #7a2030;border-radius:8px;padding:5px 9px}
+  .pp-badge .x{font-family:'Saira Condensed';font-weight:800}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">PUMP<span class="dot">·</span>PICKS</div>
+    <div class="tag">Grab numbers on your way out</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab pb active" data-game="pb" onclick="setGame('pb')">
+      POWERBALL<span class="sub">5 of 69 + red 1–26 · $2</span>
+    </div>
+    <div class="tab mm" data-game="mm" onclick="setGame('mm')">
+      MEGA MILLIONS<span class="sub">5 of 70 + gold 1–24 · $5</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <p class="ctl-label">Strategy</p>
+    <div class="seg" id="stratSeg">
+      <button data-s="quick" class="on" onclick="setStrat('quick')">Quick Pick</button>
+      <button data-s="hot" onclick="setStrat('hot')">Hot</button>
+      <button data-s="due" onclick="setStrat('due')">Overdue</button>
+      <button data-s="bal" onclick="setStrat('bal')">Balanced</button>
+    </div>
+    <div class="strat-note" id="stratNote"></div>
+
+    <p class="ctl-label" style="margin-top:14px">Lines</p>
+    <div class="seg lines" id="lineSeg">
+      <button data-n="1" class="on" onclick="setLines(1)">1</button>
+      <button data-n="3" onclick="setLines(3)">3</button>
+      <button data-n="5" onclick="setLines(5)">5</button>
+    </div>
+
+    <div id="ppRow" class="pp-row" onclick="togglePP()">
+      <div>
+        <div class="pp-title">Power Play <span class="pp-cost">+$1 / line</span></div>
+        <div class="pp-sub">Multiplies non-jackpot prizes 2X–10X</div>
+      </div>
+      <div class="switch on" id="ppSwitch"><span></span></div>
+    </div>
+    <div id="mmNote" class="pp-note" style="display:none">
+      Mega Millions includes a 2X–10X multiplier on every $5 play automatically — no add-on to choose.
+    </div>
+    <div id="ppFacts" class="pp-note" style="border-color:var(--line);color:var(--muted);background:var(--bg)">
+      10X only runs when the jackpot is $150M or less. Match 5 + Power Play pays a flat $2M. It never touches the jackpot and doesn't change your odds — just bigger non-jackpot payouts. Tell the clerk "with Power Play" at purchase; you can't add it after.
+    </div>
+
+    <button class="go" onclick="generate()">GENERATE PICKS</button>
+  </div>
+
+  <div id="out"></div>
+
+  <details id="statsBox">
+    <summary>The Numbers Behind It <span class="chev">▼</span></summary>
+    <div class="stat-body" id="statBody"></div>
+  </details>
+
+  <div class="disclaimer">
+    <b>Straight talk:</b> every lottery draw is independent and random. Past results have
+    <b>zero</b> effect on the next draw — a "hot" number and a "cold" number have identical odds.
+    Hot / Overdue / Balanced just shape <i>how the numbers feel</i>, not your chances. This is for fun. Play responsibly.
+  </div>
+
+  <div id="statusFoot" class="status"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- Game definitions ---------- */
+const GAMES = {
+  pb: {
+    name:'Powerball', whiteMax:69, whiteCount:5, spMax:26, spName:'Powerball',
+    resource:'d6yy-54nr',
+    eraStart:'2015-10-07',        // current 5/69 + 1/26 matrix
+    spEraStart:'2015-10-07',
+    parse(r){
+      const nums = (r.winning_numbers||'').trim().split(/\s+/).map(Number).filter(n=>!isNaN(n));
+      if(nums.length<6) return null;
+      return {date:r.draw_date, white:nums.slice(0,5), sp:nums[5]};
+    }
+  },
+  mm: {
+    name:'Mega Millions', whiteMax:70, whiteCount:5, spMax:24, spName:'Mega Ball',
+    resource:'5xaw-6ayf',
+    eraStart:'2017-10-31',        // white pool 1–70 since Oct 2017
+    spEraStart:'2025-04-08',      // Mega Ball pool dropped to 1–24 in Apr 2025
+    parse(r){
+      const w = (r.winning_numbers||'').trim().split(/\s+/).map(Number).filter(n=>!isNaN(n));
+      let white, sp;
+      if(r.mega_ball!=null && r.mega_ball!==''){ white=w.slice(0,5); sp=Number(r.mega_ball); }
+      else { white=w.slice(0,5); sp=w[5]; }
+      if(white.length<5 || isNaN(sp)) return null;
+      return {date:r.draw_date, white, sp};
+    }
+  }
+};
+
+const STRAT_NOTES = {
+  quick:'True random draw — the same thing the terminal does. Cleanest odds, no story.',
+  hot:'Leans toward the numbers drawn most often in this game\'s current format.',
+  due:'Leans toward numbers that haven\'t shown up in the longest stretch.',
+  bal:'Random, but shaped to match the typical winning spread (sum, odd/even, high/low).'
+};
+
+let GAME='pb', STRAT='quick', LINES=1, POWERPLAY=true;
+const DATA={};            // game -> {draws:[...], computed:{...}, asOf, source}
+
+/* ---------- Data load ---------- */
+async function loadGame(g){
+  if(DATA[g] && DATA[g].draws) return DATA[g];
+  const def=GAMES[g];
+  // try cache first for instant + offline use
+  const cached=readCache(g);
+  let draws=null, source='live', asOf=null;
+  try{
+    const url=`https://data.ny.gov/resource/${def.resource}.json?$limit=50000`;
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const rows=await res.json();
+    draws=rows.map(r=>def.parse(r)).filter(Boolean);
+    if(!draws.length) throw new Error('no rows parsed');
+    asOf=draws.reduce((m,d)=> d.date>m?d.date:m, draws[0].date);
+    writeCache(g,{draws,asOf});
+  }catch(e){
+    if(cached){ draws=cached.draws; asOf=cached.asOf; source='cache'; }
+    else throw e;
+  }
+  const computed=compute(g,draws);
+  DATA[g]={draws,computed,asOf,source};
+  return DATA[g];
+}
+
+function readCache(g){
+  try{ const raw=localStorage.getItem('pp_'+g); return raw?JSON.parse(raw):null; }catch(e){ return null; }
+}
+function writeCache(g,obj){
+  try{ localStorage.setItem('pp_'+g, JSON.stringify(obj)); }catch(e){}
+}
+
+/* ---------- Stats ---------- */
+function compute(g, draws){
+  const def=GAMES[g];
+  // sort newest-first by date string (ISO-ish) for "draws ago"
+  const sorted=[...draws].sort((a,b)=> (a.date<b.date?1:-1));
+  const whiteEra=sorted.filter(d=> d.date>=def.eraStart);
+  const spEra=sorted.filter(d=> d.date>=def.spEraStart && d.sp>=1 && d.sp<=def.spMax);
+
+  const wFreq=new Array(def.whiteMax+1).fill(0);
+  const wLast=new Array(def.whiteMax+1).fill(Infinity); // draws ago of last appearance
+  whiteEra.forEach((d,idx)=>{
+    d.white.forEach(n=>{ if(n>=1&&n<=def.whiteMax){ wFreq[n]++; if(idx<wLast[n]) wLast[n]=idx; } });
+  });
+  const spFreq=new Array(def.spMax+1).fill(0);
+  spEra.forEach(d=>{ if(d.sp>=1&&d.sp<=def.spMax) spFreq[d.sp]++; });
+
+  // sums for "balanced" target
+  const sums=whiteEra.map(d=> d.white.reduce((a,b)=>a+b,0));
+  const mean=sums.reduce((a,b)=>a+b,0)/(sums.length||1);
+  const sd=Math.sqrt(sums.reduce((a,b)=>a+(b-mean)**2,0)/(sums.length||1));
+
+  const wList=[...Array(def.whiteMax).keys()].map(i=>i+1);
+  const hot=[...wList].sort((a,b)=> wFreq[b]-wFreq[a]).slice(0,8);
+  const cold=[...wList].sort((a,b)=> wFreq[a]-wFreq[b]).slice(0,8);
+  const due=[...wList].sort((a,b)=> (wLast[b]===Infinity?1e9:wLast[b])-(wLast[a]===Infinity?1e9:wLast[a])).slice(0,8);
+
+  const spList=[...Array(def.spMax).keys()].map(i=>i+1);
+  const spHot=[...spList].sort((a,b)=> spFreq[b]-spFreq[a]).slice(0,6);
+
+  return {wFreq,wLast,spFreq,hot,cold,due,spHot,sumMean:mean,sumSd:sd,
+          whiteDraws:whiteEra.length, spDraws:spEra.length};
+}
+
+/* ---------- Picking ---------- */
+function sample(n, max, weightFn){
+  const pool=[...Array(max).keys()].map(i=>i+1);
+  const picked=[];
+  const w=pool.map(weightFn);
+  while(picked.length<n && pool.length){
+    let total=0; for(let i=0;i<pool.length;i++) total+=w[i];
+    let r=Math.random()*total, idx=0;
+    for(let i=0;i<pool.length;i++){ r-=w[i]; if(r<=0){ idx=i; break; } }
+    picked.push(pool[idx]); pool.splice(idx,1); w.splice(idx,1);
+  }
+  return picked.sort((a,b)=>a-b);
+}
+
+function pickLine(g){
+  const def=GAMES[g], c=DATA[g].computed;
+  let white, sp;
+  if(STRAT==='quick'){
+    white=sample(def.whiteCount, def.whiteMax, ()=>1);
+    sp=1+Math.floor(Math.random()*def.spMax);
+  } else if(STRAT==='hot'){
+    const maxF=Math.max(...c.wFreq.slice(1),1);
+    white=sample(def.whiteCount, def.whiteMax, n=> Math.pow((c.wFreq[n]||0)/maxF + .25, 2.2));
+    const spMaxF=Math.max(...c.spFreq.slice(1),1);
+    sp=sample(1, def.spMax, n=> Math.pow((c.spFreq[n]||0)/spMaxF + .25, 2.2))[0];
+  } else if(STRAT==='due'){
+    const maxL=Math.max(...c.wLast.slice(1).map(x=> x===Infinity?0:x),1);
+    white=sample(def.whiteCount, def.whiteMax, n=>{ const l=c.wLast[n]===Infinity?maxL:c.wLast[n]; return Math.pow(l/maxL + .15, 2.0); });
+    sp=1+Math.floor(Math.random()*def.spMax);
+  } else { // balanced
+    const lo=c.sumMean-0.85*c.sumSd, hi=c.sumMean+0.85*c.sumSd;
+    let tries=0;
+    do{
+      white=sample(def.whiteCount, def.whiteMax, ()=>1);
+      const sum=white.reduce((a,b)=>a+b,0);
+      const odd=white.filter(x=>x%2).length;
+      const low=white.filter(x=>x<=def.whiteMax/2).length;
+      if(sum>=lo && sum<=hi && odd>=2 && odd<=3 && low>=2 && low<=3) break;
+    } while(++tries<400);
+    sp=1+Math.floor(Math.random()*def.spMax);
+  }
+  return {white, sp};
+}
+
+/* ---------- Render ---------- */
+function ballHTML(n, cls){ return `<div class="ball ${cls}">${n}</div>`; }
+
+function lineHTML(line, idx, g){
+  const def=GAMES[g];
+  const spClass = g==='pb' ? 'pb' : 'mm';
+  const whites=line.white.map(n=>ballHTML(n,'w')).join('');
+  const pp = (g==='pb' && POWERPLAY);
+  const txt = line.white.join('  ')+'   +'+line.sp+'  ('+def.spName+')'+(pp?'   + POWER PLAY':'');
+  const badge = pp ? `<div style="text-align:center"><span class="pp-badge"><span class="x">×</span> Power Play — say "with Power Play"</span></div>` : '';
+  return `<div class="line">
+    <div class="line-top">
+      <span class="line-no">Line ${idx+1}</span>
+      <button class="copy" onclick="copyLine(this,'${txt.replace(/'/g,"")}')">Copy</button>
+    </div>
+    <div class="balls">${whites}<span class="sep"></span>${ballHTML(line.sp,'sp '+spClass)}</div>
+    ${badge}
+  </div>`;
+}
+
+function generate(){
+  const g=GAME;
+  if(!DATA[g]||!DATA[g].computed){ showToast('Still loading data…'); return; }
+  const out=document.getElementById('out');
+  out.innerHTML='';
+  // cost summary
+  const base = g==='pb' ? 2 : 5;
+  const per = base + (g==='pb' && POWERPLAY ? 1 : 0);
+  const total = per*LINES;
+  const ppTxt = (g==='pb' && POWERPLAY) ? ' (incl. Power Play)' : '';
+  const cb=document.createElement('div');
+  cb.className='cost-bar';
+  cb.innerHTML=`${LINES} line${LINES>1?'s':''} × $${per}${ppTxt} = <b>$${total}</b> at the counter`;
+  out.appendChild(cb);
+  for(let i=0;i<LINES;i++){
+    const line=pickLine(g);
+    const div=document.createElement('div');
+    div.innerHTML=lineHTML(line,i,g);
+    div.firstChild.style.animationDelay=(i*0.06)+'s';
+    out.appendChild(div.firstChild);
+  }
+}
+
+function renderStats(g){
+  const def=GAMES[g], d=DATA[g];
+  if(!d){ document.getElementById('statBody').innerHTML='<div class="status">Loading…</div>'; return; }
+  const c=d.computed;
+  const row=(label,arr,cls,useFreq)=> `<div class="stat-row"><div class="stat-h">${label}</div><div class="pillrow">`+
+    arr.map(n=>`<span class="pill ${cls}">${n}${useFreq===false?'':`<small>${c.wFreq[n]}×</small>`}</span>`).join('')+`</div></div>`;
+  const dueRow=`<div class="stat-row"><div class="stat-h">Most overdue (white)</div><div class="pillrow">`+
+    c.due.map(n=>{const l=c.wLast[n]===Infinity?'—':c.wLast[n];return `<span class="pill due">${n}<small>${l} ago</small></span>`;}).join('')+`</div></div>`;
+  const spRow=`<div class="stat-row"><div class="stat-h">Hottest ${def.spName}</div><div class="pillrow">`+
+    c.spHot.map(n=>`<span class="pill ${g==='pb'?'hot':'hot'}">${n}<small>${c.spFreq[n]}×</small></span>`).join('')+`</div></div>`;
+  const fmt=s=> s?s.slice(0,10):'—';
+  document.getElementById('statBody').innerHTML=
+    row('Hottest white balls', c.hot, 'hot') +
+    row('Coldest white balls', c.cold, 'cold') +
+    dueRow + spRow +
+    `<div class="meta">
+      Analyzing <b>${c.whiteDraws}</b> draws of white balls (current ${def.whiteMax===69?'5/69':'5/70'} format,
+      since <b>${def.eraStart}</b>) and <b>${c.spDraws}</b> draws for the ${def.spName}
+      (pool 1–${def.spMax}, since <b>${def.spEraStart}</b>).<br>
+      Data as of <b>${fmt(d.asOf)}</b> · source: New York State Gaming Commission open data${d.source==='cache'?' (offline cache)':''}.
+    </div>`;
+}
+
+/* ---------- UI state ---------- */
+function setGame(g){
+  GAME=g;
+  document.querySelectorAll('.tab').forEach(t=> t.classList.toggle('active', t.dataset.game===g));
+  document.getElementById('out').innerHTML='';
+  // Power Play is a Powerball-only add-on; Mega Millions multiplier is built in
+  document.getElementById('ppRow').style.display = g==='pb' ? 'flex' : 'none';
+  document.getElementById('ppFacts').style.display = g==='pb' ? 'block' : 'none';
+  document.getElementById('mmNote').style.display = g==='mm' ? 'block' : 'none';
+  ensureLoaded(g);
+}
+function togglePP(){
+  POWERPLAY=!POWERPLAY;
+  document.getElementById('ppSwitch').classList.toggle('on', POWERPLAY);
+}
+function setStrat(s){
+  STRAT=s;
+  document.querySelectorAll('#stratSeg button').forEach(b=> b.classList.toggle('on', b.dataset.s===s));
+  document.getElementById('stratNote').textContent=STRAT_NOTES[s];
+}
+function setLines(n){
+  LINES=n;
+  document.querySelectorAll('#lineSeg button').forEach(b=> b.classList.toggle('on', +b.dataset.n===n));
+}
+
+function setFoot(html,isErr){
+  const f=document.getElementById('statusFoot');
+  f.innerHTML=html; f.classList.toggle('err',!!isErr);
+}
+
+async function ensureLoaded(g){
+  if(DATA[g]&&DATA[g].computed){ renderStats(g); setFoot(''); return; }
+  setFoot('<span class="spin"></span>Pulling drawing history…');
+  document.getElementById('statBody').innerHTML='<div class="status"><span class="spin"></span>Loading…</div>';
+  try{
+    await loadGame(g);
+    renderStats(g);
+    setFoot(DATA[g].source==='cache'?'Using saved data (no connection). Pull up online to refresh.':'');
+  }catch(e){
+    setFoot('Couldn\'t reach the lottery data feed. Quick Pick still works fully offline.<br><button class="retry" onclick="ensureLoaded(\''+g+'\')">Retry</button>', true);
+    // allow pure-random play even with no data
+    DATA[g]={draws:[],computed:fallbackComputed(g),asOf:null,source:'none'};
+    document.getElementById('statBody').innerHTML='<div class="status err">No historical data available offline — Hot/Overdue/Balanced fall back to random until you reconnect.</div>';
+  }
+}
+function fallbackComputed(g){
+  const def=GAMES[g];
+  return {wFreq:new Array(def.whiteMax+1).fill(1),wLast:new Array(def.whiteMax+1).fill(1),
+    spFreq:new Array(def.spMax+1).fill(1),hot:[],cold:[],due:[],spHot:[],
+    sumMean:def.whiteMax/2*5,sumSd:def.whiteMax*0.6,whiteDraws:0,spDraws:0};
+}
+
+function copyLine(btn,txt){
+  navigator.clipboard?.writeText(txt).then(()=>{btn.textContent='Copied';showToast('Copied to clipboard');
+    setTimeout(()=>btn.textContent='Copy',1200);}).catch(()=>showToast('Copy not available'));
+}
+let toastT;
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1600);}
+
+/* ---------- Boot ---------- */
+setStrat('quick');
+setGame('pb');
+
+/* register service worker for offline / installable PWA */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
